@@ -10,6 +10,7 @@ import SwiftData
 
 struct BalanceSheetView: View {
     @Query(sort: \Account.sortOrder) private var allAccounts: [Account]
+    @State private var asOfDate: Date = Date()
 
     private var assetAccounts: [Account] {
         allAccounts.filter { $0.type == .asset }
@@ -29,8 +30,10 @@ struct BalanceSheetView: View {
 
     private func calculateBalance(for account: Account) -> Decimal {
         guard let lineItems = account.lineItems else { return 0 }
+        let cutoff = Calendar.current.startOfDay(for: asOfDate).addingTimeInterval(86400)
         var balance: Decimal = 0
         for line in lineItems {
+            guard let entryDate = line.journalEntry?.date, entryDate < cutoff else { continue }
             switch account.type.normalBalance {
             case .debit:
                 balance += line.debitAmount - line.creditAmount
@@ -50,6 +53,14 @@ struct BalanceSheetView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    DatePicker(
+                        "As of",
+                        selection: $asOfDate,
+                        displayedComponents: .date
+                    )
+                }
+
                 Section {
                     ForEach(assetAccounts) { account in
                         AccountRow(

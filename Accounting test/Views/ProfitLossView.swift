@@ -8,8 +8,69 @@
 import SwiftUI
 import SwiftData
 
+enum PeriodPreset: String, CaseIterable, Identifiable {
+    case thisMonth = "This Month"
+    case thisQuarter = "This Quarter"
+    case thisYear = "This Year"
+    case lastMonth = "Last Month"
+    case lastQuarter = "Last Quarter"
+    case lastYear = "Last Year"
+    case custom = "Custom"
+
+    var id: String { rawValue }
+
+    func dateRange(using calendar: Calendar = .current) -> (start: Date, end: Date)? {
+        let now = Date()
+        switch self {
+        case .thisMonth:
+            let start = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+            let end = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: start)!
+            return (start, end)
+        case .thisQuarter:
+            let month = calendar.component(.month, from: now)
+            let quarterStart = ((month - 1) / 3) * 3 + 1
+            var comps = calendar.dateComponents([.year], from: now)
+            comps.month = quarterStart
+            comps.day = 1
+            let start = calendar.date(from: comps)!
+            let end = calendar.date(byAdding: DateComponents(month: 3, day: -1), to: start)!
+            return (start, end)
+        case .thisYear:
+            let start = calendar.date(from: calendar.dateComponents([.year], from: now))!
+            let end = calendar.date(byAdding: DateComponents(year: 1, day: -1), to: start)!
+            return (start, end)
+        case .lastMonth:
+            let thisMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+            let start = calendar.date(byAdding: .month, value: -1, to: thisMonth)!
+            let end = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: start)!
+            return (start, end)
+        case .lastQuarter:
+            let month = calendar.component(.month, from: now)
+            let quarterStart = ((month - 1) / 3) * 3 + 1
+            var comps = calendar.dateComponents([.year], from: now)
+            comps.month = quarterStart
+            comps.day = 1
+            let thisQuarterStart = calendar.date(from: comps)!
+            let start = calendar.date(byAdding: .month, value: -3, to: thisQuarterStart)!
+            let end = calendar.date(byAdding: DateComponents(month: 3, day: -1), to: start)!
+            return (start, end)
+        case .lastYear:
+            var comps = calendar.dateComponents([.year], from: now)
+            comps.year! -= 1
+            let start = calendar.date(from: comps)!
+            let end = calendar.date(byAdding: DateComponents(year: 1, day: -1), to: start)!
+            return (start, end)
+        case .custom:
+            return nil
+        }
+    }
+}
+
 struct ProfitLossView: View {
     @Query(sort: \Account.sortOrder) private var allAccounts: [Account]
+    @State private var selectedPreset: PeriodPreset = .thisMonth
+    @State private var startDate: Date = Date()
+    @State private var endDate: Date = Date()
 
     private var revenueAccounts: [Account] {
         allAccounts.filter { $0.type == .revenue }
@@ -25,8 +86,13 @@ struct ProfitLossView: View {
 
     private func calculateBalance(for account: Account) -> Decimal {
         guard let lineItems = account.lineItems else { return 0 }
+        let rangeStart = Calendar.current.startOfDay(for: startDate)
+        let rangeEnd = Calendar.current.startOfDay(for: endDate).addingTimeInterval(86400)
         var balance: Decimal = 0
         for line in lineItems {
+            guard let entryDate = line.journalEntry?.date,
+                  entryDate >= rangeStart,
+                  entryDate < rangeEnd else { continue }
             switch account.type.normalBalance {
             case .debit:
                 balance += line.debitAmount - line.creditAmount
@@ -41,9 +107,43 @@ struct ProfitLossView: View {
         totalFor(revenueAccounts) - totalFor(expenseAccounts)
     }
 
+    private var dateRangeSubtitle: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return "\(formatter.string(from: startDate)) – \(formatter.string(from: endDate))"
+    }
+
+    private func applyPreset(_ preset: PeriodPreset) {
+        if let range = preset.dateRange() {
+            startDate = range.start
+            endDate = range.end
+        }
+    }
+
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    Picker("Period", selection: $selectedPreset) {
+                        ForEach(PeriodPreset.allCases) { preset in
+                            Text(preset.rawValue).tag(preset)
+                        }
+                    }
+
+                    if selectedPreset == .custom {
+                        DatePicker(
+                            "Start",
+                            selection: $startDate,
+                            displayedComponents: .date
+                        )
+                        DatePicker(
+                            "End",
+                            selection: $endDate,
+                            displayedComponents: .date
+                        )
+                    }
+                }
+
                 Section {
                     ForEach(revenueAccounts) { account in
                         AccountRow(
@@ -82,6 +182,23 @@ struct ProfitLossView: View {
             .listStyle(.insetGrouped)
             #endif
             .navigationTitle("Profit & Loss")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    VStack {
+                        Text("Profit & Loss")
+                            .font(.headline)
+                        Text(dateRangeSubtitle)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .onAppear {
+                applyPreset(selectedPreset)
+            }
+            .onChange(of: selectedPreset) { _, newValue in
+                applyPreset(newValue)
+            }
         }
     }
 }
