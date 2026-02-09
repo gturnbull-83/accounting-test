@@ -61,6 +61,7 @@ struct CompanySwitcherView: View {
         }
         .padding(.horizontal)
         .padding(.top, 8)
+        .padding(.bottom, 20)
         .alert("New Company", isPresented: $showingAddAlert) {
             TextField("Company Name", text: $newCompanyName)
             Button("Cancel", role: .cancel) { }
