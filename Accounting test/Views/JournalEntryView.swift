@@ -149,6 +149,7 @@ struct JournalEntryView: View {
                     }
                 }
             }
+            .padding()
             .navigationTitle("New Entry")
             .alert("Error", isPresented: $showingAlert) {
                 Button("OK", role: .cancel) { }
