@@ -9,19 +9,26 @@ import SwiftUI
 import SwiftData
 
 struct BalanceSheetView: View {
+    @Environment(CompanyManager.self) private var companyManager: CompanyManager?
     @Query(sort: \Account.sortOrder) private var allAccounts: [Account]
     @State private var asOfDate: Date = Date()
+    @State private var showingAddAccount = false
+
+    private var companyAccounts: [Account] {
+        guard let companyID = companyManager?.activeCompany?.id else { return [] }
+        return allAccounts.filter { $0.company?.id == companyID }
+    }
 
     private var assetAccounts: [Account] {
-        allAccounts.filter { $0.type == .asset }
+        companyAccounts.filter { $0.type == .asset }
     }
 
     private var liabilityAccounts: [Account] {
-        allAccounts.filter { $0.type == .liability }
+        companyAccounts.filter { $0.type == .liability }
     }
 
     private var equityAccounts: [Account] {
-        allAccounts.filter { $0.type == .equity }
+        companyAccounts.filter { $0.type == .equity }
     }
 
     private func totalFor(_ accounts: [Account]) -> Decimal {
@@ -45,8 +52,8 @@ struct BalanceSheetView: View {
     }
 
     private var netIncome: Decimal {
-        let revenueAccounts = allAccounts.filter { $0.type == .revenue }
-        let expenseAccounts = allAccounts.filter { $0.type == .expense }
+        let revenueAccounts = companyAccounts.filter { $0.type == .revenue }
+        let expenseAccounts = companyAccounts.filter { $0.type == .expense }
         return totalFor(revenueAccounts) - totalFor(expenseAccounts)
     }
 
@@ -123,6 +130,18 @@ struct BalanceSheetView: View {
             .listStyle(.insetGrouped)
             #endif
             .navigationTitle("Balance Sheet")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingAddAccount = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingAddAccount) {
+                AddAccountView()
+            }
         }
     }
 }
@@ -187,5 +206,5 @@ struct SectionHeader: View {
 
 #Preview {
     BalanceSheetView()
-        .modelContainer(for: [Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
+        .modelContainer(for: [Company.self, Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
 }

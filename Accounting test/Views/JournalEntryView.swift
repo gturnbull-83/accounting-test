@@ -9,8 +9,9 @@ import SwiftUI
 import SwiftData
 
 struct JournalEntryView: View {
+    @Environment(CompanyManager.self) private var companyManager: CompanyManager?
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Account.name) private var accounts: [Account]
+    @Query(sort: \Account.name) private var allAccounts: [Account]
 
     var onSave: (() -> Void)?
 
@@ -22,6 +23,11 @@ struct JournalEntryView: View {
 
     private var viewModel: AccountingViewModel {
         AccountingViewModel(modelContext: modelContext)
+    }
+
+    private var accounts: [Account] {
+        guard let companyID = companyManager?.activeCompany?.id else { return [] }
+        return allAccounts.filter { $0.company?.id == companyID }
     }
 
     private var totalDebits: Decimal {
@@ -190,7 +196,12 @@ struct JournalEntryView: View {
             return
         }
 
-        let success = viewModel.saveJournalEntry(date: date, memo: memo, lines: validLines)
+        let success = viewModel.saveJournalEntry(
+            date: date,
+            memo: memo,
+            lines: validLines,
+            company: companyManager?.activeCompany
+        )
 
         if success {
             resetForm()
@@ -275,5 +286,5 @@ struct LineItemRow: View {
 
 #Preview {
     JournalEntryView(onSave: nil)
-        .modelContainer(for: [Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
+        .modelContainer(for: [Company.self, Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
 }

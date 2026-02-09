@@ -9,12 +9,18 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @Environment(CompanyManager.self) private var companyManager: CompanyManager?
+
     var body: some View {
-        MainTabView()
+        if companyManager?.activeCompany != nil {
+            MainTabView()
+        } else {
+            ProgressView("Loading...")
+        }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
+        .modelContainer(for: [Company.self, Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
 }

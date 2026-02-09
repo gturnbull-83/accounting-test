@@ -12,6 +12,7 @@ import SwiftData
 struct Accounting_testApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
+            Company.self,
             Account.self,
             JournalEntry.self,
             JournalEntryLine.self
@@ -25,9 +26,19 @@ struct Accounting_testApp: App {
         }
     }()
 
+    @State private var companyManager: CompanyManager?
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .task {
+                    if companyManager == nil {
+                        let manager = CompanyManager(modelContext: sharedModelContainer.mainContext)
+                        manager.bootstrap()
+                        companyManager = manager
+                    }
+                }
+                .environment(companyManager)
         }
         .modelContainer(sharedModelContainer)
     }

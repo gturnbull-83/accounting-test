@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct TransactionsListView: View {
+    @Environment(CompanyManager.self) private var companyManager: CompanyManager?
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \JournalEntry.date, order: .reverse) private var entries: [JournalEntry]
 
@@ -18,10 +19,15 @@ struct TransactionsListView: View {
         AccountingViewModel(modelContext: modelContext)
     }
 
+    private var companyEntries: [JournalEntry] {
+        guard let companyID = companyManager?.activeCompany?.id else { return [] }
+        return entries.filter { $0.company?.id == companyID }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
-                if entries.isEmpty {
+                if companyEntries.isEmpty {
                     ContentUnavailableView(
                         "No Transactions",
                         systemImage: "doc.text",
@@ -29,7 +35,7 @@ struct TransactionsListView: View {
                     )
                 } else {
                     List {
-                        ForEach(entries) { entry in
+                        ForEach(companyEntries) { entry in
                             TransactionRow(entry: entry)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
@@ -52,7 +58,7 @@ struct TransactionsListView: View {
 
     private func deleteEntries(at offsets: IndexSet) {
         for index in offsets {
-            viewModel.deleteJournalEntry(entries[index])
+            viewModel.deleteJournalEntry(companyEntries[index])
         }
     }
 }
@@ -175,5 +181,5 @@ struct TransactionDetailView: View {
 
 #Preview {
     TransactionsListView()
-        .modelContainer(for: [Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
+        .modelContainer(for: [Company.self, Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
 }

@@ -67,17 +67,23 @@ enum PeriodPreset: String, CaseIterable, Identifiable {
 }
 
 struct ProfitLossView: View {
+    @Environment(CompanyManager.self) private var companyManager: CompanyManager?
     @Query(sort: \Account.sortOrder) private var allAccounts: [Account]
     @State private var selectedPreset: PeriodPreset = .thisMonth
     @State private var startDate: Date = Date()
     @State private var endDate: Date = Date()
 
+    private var companyAccounts: [Account] {
+        guard let companyID = companyManager?.activeCompany?.id else { return [] }
+        return allAccounts.filter { $0.company?.id == companyID }
+    }
+
     private var revenueAccounts: [Account] {
-        allAccounts.filter { $0.type == .revenue }
+        companyAccounts.filter { $0.type == .revenue }
     }
 
     private var expenseAccounts: [Account] {
-        allAccounts.filter { $0.type == .expense }
+        companyAccounts.filter { $0.type == .expense }
     }
 
     private func totalFor(_ accounts: [Account]) -> Decimal {
@@ -232,5 +238,5 @@ struct NetIncomeRow: View {
 
 #Preview {
     ProfitLossView()
-        .modelContainer(for: [Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
+        .modelContainer(for: [Company.self, Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
 }

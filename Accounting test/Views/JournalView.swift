@@ -9,13 +9,19 @@ import SwiftUI
 import SwiftData
 
 struct JournalView: View {
+    @Environment(CompanyManager.self) private var companyManager: CompanyManager?
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \JournalEntry.date, order: .reverse) private var entries: [JournalEntry]
+
+    private var companyEntries: [JournalEntry] {
+        guard let companyID = companyManager?.activeCompany?.id else { return [] }
+        return entries.filter { $0.company?.id == companyID }
+    }
 
     var body: some View {
         NavigationStack {
             Group {
-                if entries.isEmpty {
+                if companyEntries.isEmpty {
                     ContentUnavailableView(
                         "No Journal Entries",
                         systemImage: "book.closed",
@@ -24,7 +30,7 @@ struct JournalView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 16) {
-                            ForEach(entries) { entry in
+                            ForEach(companyEntries) { entry in
                                 JournalEntryCard(entry: entry)
                             }
                         }
@@ -159,5 +165,5 @@ struct JournalEntryCard: View {
 
 #Preview {
     JournalView()
-        .modelContainer(for: [Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
+        .modelContainer(for: [Company.self, Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
 }

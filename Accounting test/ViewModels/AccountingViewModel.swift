@@ -59,8 +59,9 @@ final class AccountingViewModel {
         return accounts.reduce(Decimal(0)) { $0 + calculateAccountBalance(account: $1) }
     }
 
-    func saveJournalEntry(date: Date, memo: String, lines: [(Account, Decimal, Bool)]) -> Bool {
+    func saveJournalEntry(date: Date, memo: String, lines: [(Account, Decimal, Bool)], company: Company?) -> Bool {
         let entry = JournalEntry(date: date, memo: memo)
+        entry.company = company
         modelContext.insert(entry)
 
         for (account, amount, isDebit) in lines {

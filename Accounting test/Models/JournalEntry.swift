@@ -14,6 +14,8 @@ final class JournalEntry {
     var date: Date
     var memo: String
 
+    var company: Company?
+
     @Relationship(deleteRule: .cascade)
     var lineItems: [JournalEntryLine]?
 

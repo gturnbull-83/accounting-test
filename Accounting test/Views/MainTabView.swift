@@ -17,50 +17,50 @@ enum AppTab: Hashable {
 }
 
 struct MainTabView: View {
-    @Environment(\.modelContext) private var modelContext
     @State private var selectedTab: AppTab = .balanceSheet
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            BalanceSheetView()
-                .tabItem {
-                    Label("Balance Sheet", systemImage: "chart.bar.doc.horizontal")
-                }
-                .tag(AppTab.balanceSheet)
+        VStack(spacing: 0) {
+            CompanySwitcherView()
 
-            ProfitLossView()
-                .tabItem {
-                    Label("Profit & Loss", systemImage: "chart.line.uptrend.xyaxis")
-                }
-                .tag(AppTab.profitLoss)
+            TabView(selection: $selectedTab) {
+                BalanceSheetView()
+                    .tabItem {
+                        Label("Balance Sheet", systemImage: "chart.bar.doc.horizontal")
+                    }
+                    .tag(AppTab.balanceSheet)
 
-            JournalView()
-                .tabItem {
-                    Label("Journal", systemImage: "book")
-                }
-                .tag(AppTab.journal)
+                ProfitLossView()
+                    .tabItem {
+                        Label("Profit & Loss", systemImage: "chart.line.uptrend.xyaxis")
+                    }
+                    .tag(AppTab.profitLoss)
 
-            JournalEntryView(onSave: {
-                selectedTab = .transactions
-            })
-                .tabItem {
-                    Label("New Entry", systemImage: "plus.circle")
-                }
-                .tag(AppTab.newEntry)
+                JournalView()
+                    .tabItem {
+                        Label("Journal", systemImage: "book")
+                    }
+                    .tag(AppTab.journal)
 
-            TransactionsListView()
-                .tabItem {
-                    Label("Transactions", systemImage: "list.bullet.rectangle")
-                }
-                .tag(AppTab.transactions)
-        }
-        .onAppear {
-            SeedData.seedAccountsIfNeeded(context: modelContext)
+                JournalEntryView(onSave: {
+                    selectedTab = .transactions
+                })
+                    .tabItem {
+                        Label("New Entry", systemImage: "plus.circle")
+                    }
+                    .tag(AppTab.newEntry)
+
+                TransactionsListView()
+                    .tabItem {
+                        Label("Transactions", systemImage: "list.bullet.rectangle")
+                    }
+                    .tag(AppTab.transactions)
+            }
         }
     }
 }
 
 #Preview {
     MainTabView()
-        .modelContainer(for: [Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
+        .modelContainer(for: [Company.self, Account.self, JournalEntry.self, JournalEntryLine.self], inMemory: true)
 }

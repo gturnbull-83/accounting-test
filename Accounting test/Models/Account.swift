@@ -16,6 +16,8 @@ final class Account {
     var balance: Decimal
     var sortOrder: Int
 
+    var company: Company?
+
     @Relationship(inverse: \JournalEntryLine.account)
     var lineItems: [JournalEntryLine]?
 
