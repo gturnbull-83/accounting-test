@@ -17,7 +17,7 @@ struct JournalEntryView: View {
 
     @State private var date = Date()
     @State private var memo = ""
-    @State private var lineItems: [LineItemEntry] = []
+    @State private var lineItems: [LineItemEntry] = [LineItemEntry(), LineItemEntry()]
     @State private var showingAlert = false
     @State private var alertMessage = ""
 
@@ -215,7 +215,7 @@ struct JournalEntryView: View {
     private func resetForm() {
         date = Date()
         memo = ""
-        lineItems = []
+        lineItems = [LineItemEntry(), LineItemEntry()]
     }
 }
 
