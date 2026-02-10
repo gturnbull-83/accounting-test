@@ -7,6 +7,12 @@
 
 import SwiftUI
 import SwiftData
+#if canImport(AppKit)
+import AppKit
+import PDFKit
+#elseif canImport(UIKit)
+import UIKit
+#endif
 
 enum ReportType: String, CaseIterable, Identifiable {
     case balanceSheet = "Balance Sheet"
@@ -89,6 +95,12 @@ struct ExportReportView: View {
                     if let url = generatedFileURL {
                         ShareLink(item: url) {
                             Label("Share Report", systemImage: "square.and.arrow.up")
+                        }
+
+                        Button {
+                            printReport()
+                        } label: {
+                            Label("Print Report", systemImage: "printer")
                         }
                     }
 
@@ -208,6 +220,34 @@ struct ExportReportView: View {
         }
 
         isGenerating = false
+    }
+
+    private func printReport() {
+        guard let url = generatedFileURL else { return }
+
+        #if canImport(AppKit)
+        guard let pdfDocument = PDFDocument(url: url) else { return }
+        let printInfo = NSPrintInfo.shared
+        printInfo.horizontalPagination = .fit
+        printInfo.verticalPagination = .automatic
+        printInfo.isHorizontallyCentered = true
+        printInfo.isVerticallyCentered = false
+
+        if let printOperation = pdfDocument.printOperation(for: printInfo, scalingMode: .pageScaleToFit, autoRotate: true) {
+            printOperation.showsPrintPanel = true
+            printOperation.showsProgressPanel = true
+            printOperation.run()
+        }
+        #elseif canImport(UIKit)
+        guard UIPrintInteractionController.canPrint(url) else { return }
+        let printController = UIPrintInteractionController.shared
+        printController.printingItem = url
+        let printInfo = UIPrintInfo(dictionary: nil)
+        printInfo.jobName = url.lastPathComponent
+        printInfo.outputType = .general
+        printController.printInfo = printInfo
+        printController.present(animated: true)
+        #endif
     }
 
     private func buildBalanceSheetReport() -> ReportData {
