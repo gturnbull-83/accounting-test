@@ -10,9 +10,9 @@ import SwiftData
 
 @Model
 final class Company {
-    var id: UUID
-    var name: String
-    var createdAt: Date
+    var id: UUID = UUID()
+    var name: String = ""
+    var createdAt: Date = Date()
 
     @Relationship(deleteRule: .cascade, inverse: \Account.company)
     var accounts: [Account]?

@@ -10,13 +10,13 @@ import SwiftData
 
 @Model
 final class JournalEntry {
-    var id: UUID
-    var date: Date
-    var memo: String
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var memo: String = ""
 
     var company: Company?
 
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .cascade, inverse: \JournalEntryLine.journalEntry)
     var lineItems: [JournalEntryLine]?
 
     init(date: Date = Date(), memo: String = "") {
@@ -44,9 +44,9 @@ final class JournalEntry {
 
 @Model
 final class JournalEntryLine {
-    var id: UUID
-    var debitAmount: Decimal
-    var creditAmount: Decimal
+    var id: UUID = UUID()
+    var debitAmount: Decimal = 0
+    var creditAmount: Decimal = 0
 
     var account: Account?
     var journalEntry: JournalEntry?

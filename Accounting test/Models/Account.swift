@@ -10,11 +10,11 @@ import SwiftData
 
 @Model
 final class Account {
-    var id: UUID
-    var name: String
-    var type: AccountType
-    var balance: Decimal
-    var sortOrder: Int
+    var id: UUID = UUID()
+    var name: String = ""
+    var type: AccountType = AccountType.asset
+    var balance: Decimal = 0
+    var sortOrder: Int = 0
 
     var company: Company?
 
