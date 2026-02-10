@@ -17,7 +17,7 @@ struct Accounting_testApp: App {
             JournalEntry.self,
             JournalEntryLine.self
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false, cloudKitDatabase: .automatic)
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])

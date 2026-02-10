@@ -53,12 +53,19 @@ struct SeedData {
         try? context.save()
     }
 
-    static func ensureDefaultCompanyExists(context: ModelContext) -> Company {
+    private static let hasSeededKey = "hasSeededDefaultData"
+
+    static func ensureDefaultCompanyExists(context: ModelContext) -> Company? {
         let descriptor = FetchDescriptor<Company>()
         let existingCompanies = (try? context.fetch(descriptor)) ?? []
 
         if let first = existingCompanies.first {
             return first
+        }
+
+        // Already seeded on this device — data hasn't synced from CloudKit yet
+        if UserDefaults.standard.bool(forKey: hasSeededKey) {
+            return nil
         }
 
         let company = Company(name: "My Company")
@@ -77,6 +84,7 @@ struct SeedData {
         }
 
         try? context.save()
+        UserDefaults.standard.set(true, forKey: hasSeededKey)
         return company
     }
 

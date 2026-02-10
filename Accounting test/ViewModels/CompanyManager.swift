@@ -32,7 +32,9 @@ final class CompanyManager {
             activeCompany = defaultCompany
         }
 
-        persistActiveCompanyID()
+        if activeCompany != nil {
+            persistActiveCompanyID()
+        }
     }
 
     func createCompany(name: String) -> Company {
