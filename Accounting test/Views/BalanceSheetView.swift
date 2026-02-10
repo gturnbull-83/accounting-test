@@ -12,7 +12,9 @@ struct BalanceSheetView: View {
     @Environment(CompanyManager.self) private var companyManager: CompanyManager?
     @Query(sort: \Account.sortOrder) private var allAccounts: [Account]
     @State private var asOfDate: Date = Date()
-    @State private var showingAddAccount = false
+    @State private var showingChartOfAccounts = false
+    @State private var showingTrialBalance = false
+    @State private var showingExport = false
 
     private var companyAccounts: [Account] {
         guard let companyID = companyManager?.activeCompany?.id else { return [] }
@@ -132,15 +134,36 @@ struct BalanceSheetView: View {
             .navigationTitle("Balance Sheet")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showingAddAccount = true
+                    Menu {
+                        Button {
+                            showingChartOfAccounts = true
+                        } label: {
+                            Label("Chart of Accounts", systemImage: "list.bullet")
+                        }
+                        Button {
+                            showingTrialBalance = true
+                        } label: {
+                            Label("Trial Balance", systemImage: "scale.3d")
+                        }
+                        Divider()
+                        Button {
+                            showingExport = true
+                        } label: {
+                            Label("Export Reports", systemImage: "square.and.arrow.up")
+                        }
                     } label: {
-                        Image(systemName: "plus")
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }
-            .sheet(isPresented: $showingAddAccount) {
-                AddAccountView()
+            .sheet(isPresented: $showingChartOfAccounts) {
+                ChartOfAccountsView()
+            }
+            .sheet(isPresented: $showingTrialBalance) {
+                TrialBalanceView()
+            }
+            .sheet(isPresented: $showingExport) {
+                ExportReportView()
             }
         }
     }

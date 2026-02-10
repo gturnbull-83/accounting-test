@@ -12,8 +12,14 @@ struct TransactionsListView: View {
     @Environment(CompanyManager.self) private var companyManager: CompanyManager?
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \JournalEntry.date, order: .reverse) private var entries: [JournalEntry]
+    @Query(sort: \Account.name) private var allAccountsForFilter: [Account]
 
     @State private var selectedEntry: JournalEntry?
+    @State private var searchText = ""
+    @State private var showingFilters = false
+    @State private var filterStartDate: Date?
+    @State private var filterEndDate: Date?
+    @State private var filterAccount: Account?
 
     private var viewModel: AccountingViewModel {
         AccountingViewModel(modelContext: modelContext)
@@ -24,42 +30,240 @@ struct TransactionsListView: View {
         return entries.filter { $0.company?.id == companyID }
     }
 
+    private var companyAccountsForFilter: [Account] {
+        guard let companyID = companyManager?.activeCompany?.id else { return [] }
+        return allAccountsForFilter.filter { $0.company?.id == companyID }
+    }
+
+    private var hasActiveFilters: Bool {
+        filterStartDate != nil || filterEndDate != nil || filterAccount != nil
+    }
+
+    private var filteredEntries: [JournalEntry] {
+        var result = companyEntries
+
+        if !searchText.isEmpty {
+            result = result.filter { $0.memo.localizedCaseInsensitiveContains(searchText) }
+        }
+
+        if let start = filterStartDate {
+            let startOfDay = Calendar.current.startOfDay(for: start)
+            result = result.filter { $0.date >= startOfDay }
+        }
+
+        if let end = filterEndDate {
+            let endOfDay = Calendar.current.startOfDay(for: end).addingTimeInterval(86400)
+            result = result.filter { $0.date < endOfDay }
+        }
+
+        if let account = filterAccount {
+            result = result.filter { entry in
+                entry.lineItems?.contains { $0.account?.id == account.id } ?? false
+            }
+        }
+
+        return result
+    }
+
     var body: some View {
         NavigationStack {
-            Group {
-                if companyEntries.isEmpty {
-                    ContentUnavailableView(
-                        "No Transactions",
-                        systemImage: "doc.text",
-                        description: Text("Create a journal entry to see it here.")
-                    )
-                } else {
-                    List {
-                        ForEach(companyEntries) { entry in
-                            TransactionRow(entry: entry)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    selectedEntry = entry
+            VStack(spacing: 0) {
+                if hasActiveFilters {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            if let start = filterStartDate {
+                                FilterChip(label: "From: \(formatChipDate(start))") {
+                                    filterStartDate = nil
                                 }
+                            }
+                            if let end = filterEndDate {
+                                FilterChip(label: "To: \(formatChipDate(end))") {
+                                    filterEndDate = nil
+                                }
+                            }
+                            if let account = filterAccount {
+                                FilterChip(label: account.name) {
+                                    filterAccount = nil
+                                }
+                            }
                         }
-                        .onDelete(perform: deleteEntries)
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
                     }
-                    #if os(iOS)
-                    .listStyle(.insetGrouped)
-                    #endif
+                }
+
+                Group {
+                    if companyEntries.isEmpty {
+                        ContentUnavailableView(
+                            "No Transactions",
+                            systemImage: "doc.text",
+                            description: Text("Create a journal entry to see it here.")
+                        )
+                    } else if filteredEntries.isEmpty {
+                        ContentUnavailableView(
+                            "No Results",
+                            systemImage: "magnifyingglass",
+                            description: Text("Try adjusting your search or filters.")
+                        )
+                    } else {
+                        List {
+                            ForEach(filteredEntries) { entry in
+                                TransactionRow(entry: entry)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        selectedEntry = entry
+                                    }
+                            }
+                            .onDelete(perform: deleteEntries)
+                        }
+                        #if os(iOS)
+                        .listStyle(.insetGrouped)
+                        #endif
+                    }
                 }
             }
             .navigationTitle("Transactions")
+            .searchable(text: $searchText, prompt: "Search by memo")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingFilters = true
+                    } label: {
+                        Image(systemName: hasActiveFilters
+                            ? "line.3.horizontal.decrease.circle.fill"
+                            : "line.3.horizontal.decrease.circle")
+                    }
+                }
+            }
             .sheet(item: $selectedEntry) { entry in
                 TransactionDetailView(entry: entry)
+            }
+            .sheet(isPresented: $showingFilters) {
+                TransactionFilterView(
+                    filterStartDate: $filterStartDate,
+                    filterEndDate: $filterEndDate,
+                    filterAccount: $filterAccount,
+                    accounts: companyAccountsForFilter
+                )
             }
         }
     }
 
     private func deleteEntries(at offsets: IndexSet) {
         for index in offsets {
-            viewModel.deleteJournalEntry(companyEntries[index])
+            viewModel.deleteJournalEntry(filteredEntries[index])
         }
+    }
+
+    private func formatChipDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        return formatter.string(from: date)
+    }
+}
+
+struct FilterChip: View {
+    let label: String
+    let onRemove: () -> Void
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.caption)
+            Button {
+                onRemove()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.caption)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.fill.tertiary, in: Capsule())
+    }
+}
+
+struct TransactionFilterView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    @Binding var filterStartDate: Date?
+    @Binding var filterEndDate: Date?
+    @Binding var filterAccount: Account?
+    let accounts: [Account]
+
+    @State private var hasStartDate = false
+    @State private var hasEndDate = false
+    @State private var localStartDate = Date()
+    @State private var localEndDate = Date()
+    @State private var selectedAccountID: UUID?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Toggle("Start Date", isOn: $hasStartDate)
+                    if hasStartDate {
+                        DatePicker("From", selection: $localStartDate, displayedComponents: .date)
+                    }
+                    Toggle("End Date", isOn: $hasEndDate)
+                    if hasEndDate {
+                        DatePicker("To", selection: $localEndDate, displayedComponents: .date)
+                    }
+                } header: {
+                    Text("Date Range")
+                }
+
+                Section {
+                    Picker("Account", selection: $selectedAccountID) {
+                        Text("All Accounts").tag(nil as UUID?)
+                        ForEach(accounts) { account in
+                            Text(account.name).tag(account.id as UUID?)
+                        }
+                    }
+                } header: {
+                    Text("Account")
+                }
+
+                Section {
+                    Button("Clear All Filters", role: .destructive) {
+                        hasStartDate = false
+                        hasEndDate = false
+                        selectedAccountID = nil
+                    }
+                }
+            }
+            .navigationTitle("Filters")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Apply") {
+                        applyFilters()
+                    }
+                }
+            }
+            .onAppear {
+                hasStartDate = filterStartDate != nil
+                hasEndDate = filterEndDate != nil
+                if let start = filterStartDate { localStartDate = start }
+                if let end = filterEndDate { localEndDate = end }
+                selectedAccountID = filterAccount?.id
+            }
+        }
+    }
+
+    private func applyFilters() {
+        filterStartDate = hasStartDate ? localStartDate : nil
+        filterEndDate = hasEndDate ? localEndDate : nil
+        filterAccount = accounts.first { $0.id == selectedAccountID }
+        dismiss()
     }
 }
 

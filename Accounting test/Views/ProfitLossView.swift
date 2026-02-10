@@ -72,6 +72,7 @@ struct ProfitLossView: View {
     @State private var selectedPreset: PeriodPreset = .thisMonth
     @State private var startDate: Date = Date()
     @State private var endDate: Date = Date()
+    @State private var showingExport = false
 
     private var companyAccounts: [Account] {
         guard let companyID = companyManager?.activeCompany?.id else { return [] }
@@ -198,6 +199,16 @@ struct ProfitLossView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingExport = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingExport) {
+                ExportReportView(preselectedReportType: .profitAndLoss)
             }
             .onAppear {
                 applyPreset(selectedPreset)
