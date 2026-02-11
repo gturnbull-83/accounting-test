@@ -87,14 +87,14 @@ struct JournalEntryView: View {
                     HStack {
                         Text("Total Debits")
                         Spacer()
-                        Text(formatCurrency(totalDebits))
+                        Text(Theme.formatCurrency(totalDebits))
                             .monospacedDigit()
                     }
 
                     HStack {
                         Text("Total Credits")
                         Spacer()
-                        Text(formatCurrency(totalCredits))
+                        Text(Theme.formatCurrency(totalCredits))
                             .monospacedDigit()
                     }
 
@@ -103,7 +103,7 @@ struct JournalEntryView: View {
                             Text("Difference")
                                 .foregroundStyle(.red)
                             Spacer()
-                            Text(formatCurrency(abs(difference)))
+                            Text(Theme.formatCurrency(abs(difference)))
                                 .monospacedDigit()
                                 .foregroundStyle(.red)
                         }
@@ -132,7 +132,10 @@ struct JournalEntryView: View {
                             Spacer()
                         }
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
                     .disabled(!canSave)
+                    .listRowBackground(Color.clear)
 
                     if !canSave {
                         VStack(alignment: .leading, spacing: 4) {
@@ -149,7 +152,7 @@ struct JournalEntryView: View {
                             if !isBalanced && totalDebits > 0 {
                                 Label("Debits must equal credits", systemImage: "exclamationmark.circle")
                                     .font(.caption)
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(.red)
                             }
                         }
                     }
@@ -163,13 +166,6 @@ struct JournalEntryView: View {
                 Text(alertMessage)
             }
         }
-    }
-
-    private func formatCurrency(_ value: Decimal) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: value as NSDecimalNumber) ?? "$0.00"
     }
 
     private func saveEntry() {
@@ -261,6 +257,7 @@ struct LineItemRow: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 150)
+                .tint(Theme.accent)
 
                 Spacer()
 

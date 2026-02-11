@@ -52,13 +52,6 @@ struct JournalEntryCard: View {
         return formatter.string(from: entry.date)
     }
 
-    private func formatCurrency(_ value: Decimal) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: value as NSDecimalNumber) ?? "$0.00"
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -68,14 +61,14 @@ struct JournalEntryCard: View {
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(formatCurrency(entry.displayAmount))
+                Text(Theme.formatCurrency(entry.displayAmount))
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .monospacedDigit()
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(Color.gray.opacity(0.1))
+            .background(.ultraThinMaterial)
 
             // Memo
             if !entry.memo.isEmpty {
@@ -119,11 +112,11 @@ struct JournalEntryCard: View {
                         Text(line.account?.name ?? "Unknown")
                             .font(.subheadline)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Text(line.debitAmount > 0 ? formatCurrency(line.debitAmount) : "")
+                        Text(line.debitAmount > 0 ? Theme.formatCurrency(line.debitAmount) : "")
                             .font(.subheadline)
                             .monospacedDigit()
                             .frame(width: 80, alignment: .trailing)
-                        Text(line.creditAmount > 0 ? formatCurrency(line.creditAmount) : "")
+                        Text(line.creditAmount > 0 ? Theme.formatCurrency(line.creditAmount) : "")
                             .font(.subheadline)
                             .monospacedDigit()
                             .frame(width: 80, alignment: .trailing)
@@ -141,12 +134,12 @@ struct JournalEntryCard: View {
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(formatCurrency(entry.totalDebits))
+                    Text(Theme.formatCurrency(entry.totalDebits))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .monospacedDigit()
                         .frame(width: 80, alignment: .trailing)
-                    Text(formatCurrency(entry.totalCredits))
+                    Text(Theme.formatCurrency(entry.totalCredits))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .monospacedDigit()
@@ -157,9 +150,7 @@ struct JournalEntryCard: View {
             }
             .padding(.bottom, 8)
         }
-        .background(Color.white.opacity(0.8))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+        .cardStyle(borderColor: .indigo)
     }
 }
 

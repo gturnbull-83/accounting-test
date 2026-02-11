@@ -45,16 +45,17 @@ struct CompanySwitcherView: View {
             } label: {
                 HStack(spacing: 7) {
                     Image(systemName: "building.2")
+                        .foregroundStyle(Theme.accent)
                     Text(companyManager?.activeCompany?.name ?? "No Company")
-                        .fontWeight(.semibold)
+                        .fontWeight(.bold)
                     Image(systemName: "chevron.down")
                         .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 .font(.system(size: 19.2))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color.gray.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
             }
 
             Spacer()

@@ -160,10 +160,11 @@ struct ProfitLossView: View {
                     }
                     TotalRow(
                         label: "Total Revenue",
-                        amount: totalFor(revenueAccounts)
+                        amount: totalFor(revenueAccounts),
+                        tintColor: Theme.color(for: .revenue)
                     )
                 } header: {
-                    SectionHeader(title: "Revenue")
+                    SectionHeader(title: "Revenue", accountType: .revenue)
                 }
 
                 Section {
@@ -175,10 +176,11 @@ struct ProfitLossView: View {
                     }
                     TotalRow(
                         label: "Total Expenses",
-                        amount: totalFor(expenseAccounts)
+                        amount: totalFor(expenseAccounts),
+                        tintColor: Theme.color(for: .expense)
                     )
                 } header: {
-                    SectionHeader(title: "Expenses")
+                    SectionHeader(title: "Expenses", accountType: .expense)
                 }
 
                 Section {
@@ -223,15 +225,12 @@ struct ProfitLossView: View {
 struct NetIncomeRow: View {
     let amount: Decimal
 
-    private var formattedAmount: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: amount as NSDecimalNumber) ?? "$0.00"
-    }
-
     private var isPositive: Bool {
         amount >= 0
+    }
+
+    private var rowColor: Color {
+        isPositive ? Theme.color(for: .revenue) : Theme.color(for: .expense)
     }
 
     var body: some View {
@@ -239,11 +238,12 @@ struct NetIncomeRow: View {
             Text("Net Income")
                 .fontWeight(.bold)
             Spacer()
-            Text(formattedAmount)
+            Text(Theme.formatCurrency(amount))
                 .fontWeight(.bold)
                 .monospacedDigit()
                 .foregroundStyle(isPositive ? Color.green : Color.red)
         }
+        .listRowBackground(rowColor.opacity(0.10))
     }
 }
 

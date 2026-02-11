@@ -77,13 +77,6 @@ struct TrialBalanceView: View {
         }
     }
 
-    private func formatCurrency(_ value: Decimal) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: value as NSDecimalNumber) ?? "$0.00"
-    }
-
     var body: some View {
         NavigationStack {
             List {
@@ -117,13 +110,14 @@ struct TrialBalanceView: View {
                             .textCase(.uppercase)
                             .frame(width: 90, alignment: .trailing)
                     }
+                    .listRowBackground(Theme.accent.opacity(0.06))
 
                     ForEach(accountsWithBalances, id: \.0.id) { account, balance in
                         HStack {
                             Text(account.name)
                             Spacer()
                             if isDebitBalance(account: account, balance: balance) {
-                                Text(formatCurrency(abs(balance)))
+                                Text(Theme.formatCurrency(abs(balance)))
                                     .monospacedDigit()
                                     .frame(width: 90, alignment: .trailing)
                                 Text("")
@@ -131,7 +125,7 @@ struct TrialBalanceView: View {
                             } else {
                                 Text("")
                                     .frame(width: 90, alignment: .trailing)
-                                Text(formatCurrency(abs(balance)))
+                                Text(Theme.formatCurrency(abs(balance)))
                                     .monospacedDigit()
                                     .frame(width: 90, alignment: .trailing)
                             }
@@ -144,26 +138,35 @@ struct TrialBalanceView: View {
                         Text("Totals")
                             .fontWeight(.semibold)
                         Spacer()
-                        Text(formatCurrency(totalDebits))
+                        Text(Theme.formatCurrency(totalDebits))
                             .fontWeight(.semibold)
                             .monospacedDigit()
                             .frame(width: 90, alignment: .trailing)
-                        Text(formatCurrency(totalCredits))
+                        Text(Theme.formatCurrency(totalCredits))
                             .fontWeight(.semibold)
                             .monospacedDigit()
                             .frame(width: 90, alignment: .trailing)
                     }
+                    .listRowBackground(Theme.accent.opacity(0.08))
 
                     HStack {
                         Spacer()
                         if isBalanced {
-                            Label("Balanced", systemImage: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
+                            Text("Balanced")
                                 .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 4)
+                                .background(Color.green, in: Capsule())
                         } else {
-                            Label("Out of Balance", systemImage: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.red)
+                            Text("Out of Balance")
                                 .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 4)
+                                .background(Color.red, in: Capsule())
                         }
                         Spacer()
                     }

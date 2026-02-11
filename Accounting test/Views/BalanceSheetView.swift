@@ -79,10 +79,11 @@ struct BalanceSheetView: View {
                     }
                     TotalRow(
                         label: "Total Assets",
-                        amount: totalFor(assetAccounts)
+                        amount: totalFor(assetAccounts),
+                        tintColor: Theme.color(for: .asset)
                     )
                 } header: {
-                    SectionHeader(title: "Assets")
+                    SectionHeader(title: "Assets", accountType: .asset)
                 }
 
                 Section {
@@ -94,10 +95,11 @@ struct BalanceSheetView: View {
                     }
                     TotalRow(
                         label: "Total Liabilities",
-                        amount: totalFor(liabilityAccounts)
+                        amount: totalFor(liabilityAccounts),
+                        tintColor: Theme.color(for: .liability)
                     )
                 } header: {
-                    SectionHeader(title: "Liabilities")
+                    SectionHeader(title: "Liabilities", accountType: .liability)
                 }
 
                 Section {
@@ -113,10 +115,11 @@ struct BalanceSheetView: View {
                     )
                     TotalRow(
                         label: "Total Equity",
-                        amount: totalFor(equityAccounts) + netIncome
+                        amount: totalFor(equityAccounts) + netIncome,
+                        tintColor: Theme.color(for: .equity)
                     )
                 } header: {
-                    SectionHeader(title: "Equity")
+                    SectionHeader(title: "Equity", accountType: .equity)
                 }
 
                 Section {
@@ -124,7 +127,9 @@ struct BalanceSheetView: View {
                         label: "Total Liabilities & Equity",
                         amount: totalFor(liabilityAccounts) +
                                 totalFor(equityAccounts) +
-                                netIncome
+                                netIncome,
+                        tintColor: Theme.accent,
+                        isGrandTotal: true
                     )
                 }
             }
@@ -173,19 +178,12 @@ struct AccountRow: View {
     let name: String
     let balance: Decimal
 
-    private var formattedBalance: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: balance as NSDecimalNumber) ?? "$0.00"
-    }
-
     var body: some View {
         HStack {
             Text(name)
                 .foregroundStyle(.primary)
             Spacer()
-            Text(formattedBalance)
+            Text(Theme.formatCurrency(balance))
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
         }
@@ -195,35 +193,41 @@ struct AccountRow: View {
 struct TotalRow: View {
     let label: String
     let amount: Decimal
-
-    private var formattedAmount: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: amount as NSDecimalNumber) ?? "$0.00"
-    }
+    var tintColor: Color = Theme.accent
+    var isGrandTotal: Bool = false
 
     var body: some View {
         HStack {
             Text(label)
                 .fontWeight(.semibold)
             Spacer()
-            Text(formattedAmount)
+            Text(Theme.formatCurrency(amount))
                 .fontWeight(.semibold)
                 .monospacedDigit()
         }
+        .listRowBackground(
+            tintColor.opacity(isGrandTotal ? 0.14 : 0.08)
+        )
     }
 }
 
 struct SectionHeader: View {
     let title: String
+    var accountType: AccountType? = nil
 
     var body: some View {
-        Text(title)
-            .font(.subheadline)
-            .fontWeight(.medium)
-            .textCase(.uppercase)
-            .foregroundStyle(.secondary)
+        HStack(spacing: 6) {
+            if let accountType {
+                Circle()
+                    .fill(Theme.color(for: accountType))
+                    .frame(width: 8, height: 8)
+            }
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .textCase(.uppercase)
+                .foregroundStyle(.secondary)
+        }
     }
 }
 

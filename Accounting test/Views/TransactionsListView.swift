@@ -170,6 +170,7 @@ struct FilterChip: View {
         HStack(spacing: 4) {
             Text(label)
                 .font(.caption)
+                .fontWeight(.medium)
             Button {
                 onRemove()
             } label: {
@@ -180,7 +181,8 @@ struct FilterChip: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(.fill.tertiary, in: Capsule())
+        .background(Theme.accent.opacity(0.12), in: Capsule())
+        .foregroundStyle(Theme.accent)
     }
 }
 
@@ -276,29 +278,32 @@ struct TransactionRow: View {
         return formatter.string(from: entry.date)
     }
 
-    private var formattedAmount: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: entry.displayAmount as NSDecimalNumber) ?? "$0.00"
+    private var isBalanced: Bool {
+        entry.totalDebits == entry.totalCredits
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(entry.memo)
-                    .font(.headline)
-                    .lineLimit(1)
-                Spacer()
-                Text(formattedAmount)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .monospacedDigit()
-            }
+        HStack(spacing: 10) {
+            Circle()
+                .fill(isBalanced ? Color.green : Color.orange)
+                .frame(width: 8, height: 8)
 
-            Text(formattedDate)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(entry.memo)
+                        .font(.headline)
+                        .lineLimit(1)
+                    Spacer()
+                    Text(Theme.formatCurrency(entry.displayAmount))
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .monospacedDigit()
+                }
+
+                Text(formattedDate)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.vertical, 4)
     }
@@ -312,13 +317,6 @@ struct TransactionDetailView: View {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
         return formatter.string(from: entry.date)
-    }
-
-    private func formatCurrency(_ value: Decimal) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: value as NSDecimalNumber) ?? "$0.00"
     }
 
     var body: some View {
@@ -342,7 +340,7 @@ struct TransactionDetailView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(formatCurrency(line.amount))
+                            Text(Theme.formatCurrency(line.amount))
                                 .monospacedDigit()
                         }
                     }
@@ -354,13 +352,13 @@ struct TransactionDetailView: View {
                     HStack {
                         Text("Total Debits")
                         Spacer()
-                        Text(formatCurrency(entry.totalDebits))
+                        Text(Theme.formatCurrency(entry.totalDebits))
                             .monospacedDigit()
                     }
                     HStack {
                         Text("Total Credits")
                         Spacer()
-                        Text(formatCurrency(entry.totalCredits))
+                        Text(Theme.formatCurrency(entry.totalCredits))
                             .monospacedDigit()
                     }
                 } header: {

@@ -32,7 +32,13 @@ struct AddAccountView: View {
                 Section {
                     Picker("Account Type", selection: $accountType) {
                         ForEach(AccountType.allCases, id: \.self) { type in
-                            Text(type.displayName).tag(type)
+                            HStack {
+                                Circle()
+                                    .fill(Theme.color(for: type))
+                                    .frame(width: 8, height: 8)
+                                Text(type.displayName)
+                            }
+                            .tag(type)
                         }
                     }
                 } header: {
