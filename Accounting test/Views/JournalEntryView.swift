@@ -55,7 +55,7 @@ struct JournalEntryView: View {
             Form {
                 Section {
                     DatePicker("Date", selection: $date, displayedComponents: .date)
-                    TextField("Memo", text: $memo, axis: .vertical)
+                    TextField("Memo", text: $memo, prompt: Text("Required"), axis: .vertical)
                         .lineLimit(2...4)
                 } header: {
                     Text("Entry Details")
